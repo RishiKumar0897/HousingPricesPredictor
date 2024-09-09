@@ -21,6 +21,7 @@ train_data['population'] = np.log(train_data['population'] + 1)
 train_data['households'] = np.log(train_data['households'] + 1)
 
 train_data = train_data.join(pd.get_dummies(train_data.ocean_proximity)).drop(["ocean_proximity"], axis=1)
+train_columns = train_data.columns
 
 ##plt.figure(figsize=(15, 8))
 #sns.scatterplot(x="latitude", y="longitude", data=train_data, hue="median_house_value", palette="coolwarm")
@@ -47,11 +48,17 @@ test_data['population'] = np.log(test_data['population'] + 1)
 test_data['households'] = np.log(test_data['households'] + 1)
 
 test_data = test_data.join(pd.get_dummies(test_data.ocean_proximity)).drop(["ocean_proximity"], axis=1)
+test_data.reindex(columns=train_columns, fill_value=0) # Reindex columns to match train data
 
 test_data['bedroom_ratio'] = test_data['total_bedrooms'] / test_data['total_rooms']
 test_data['household_rooms'] = test_data['total_rooms'] / test_data['households']
 
 x_test, y_test = test_data.drop(['median_house_value'], axis=1), test_data['median_house_value']
 x_test_s = scaler.transform(x_test)
-regression.score(x_test_s, y_test)
+print("Linear Regression score: ", regression.score(x_test_s, y_test))
 
+from sklearn.ensemble import RandomForestRegressor
+
+forest = RandomForestRegressor()
+forest.fit(x_train, y_train)
+print("Random Forest score: ", forest.score(x_test, y_test))
